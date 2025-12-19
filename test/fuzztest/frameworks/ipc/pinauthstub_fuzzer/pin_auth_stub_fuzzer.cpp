@@ -40,7 +40,7 @@ namespace {
 constexpr uint32_t PIN_AUTH_CODE_MIN = 1;
 constexpr uint32_t PIN_AUTH_CODE_MAX = 2;
 const std::u16string PIN_AUTH_INTERFACE_TOKEN = u"ohos.PinAuth.PinAuthInterface";
-bool PinAuthStubFuzzTest(const uint8_t *rawData, size_t size)
+bool DoPinAuthStubFuzzTest(const uint8_t *rawData, size_t size, uint32_t code)
 {
     IAM_LOGI("start");
     if (rawData == nullptr) {
@@ -48,23 +48,32 @@ bool PinAuthStubFuzzTest(const uint8_t *rawData, size_t size)
     }
 
     PinAuthService pinAuthService;
-    for (uint32_t code = PIN_AUTH_CODE_MIN; code <= PIN_AUTH_CODE_MAX; code++) {
-        MessageParcel data;
-        MessageParcel reply;
-        MessageOption optionSync = MessageOption::TF_SYNC;
-        MessageOption optionAsync = MessageOption::TF_ASYNC;
-        // Sync
-        data.WriteInterfaceToken(PIN_AUTH_INTERFACE_TOKEN);
-        data.WriteBuffer(rawData, size);
-        data.RewindRead(0);
-        (void)pinAuthService.OnRemoteRequest(code, data, reply, optionSync);
-        // Async
-        data.WriteInterfaceToken(PIN_AUTH_INTERFACE_TOKEN);
-        data.WriteBuffer(rawData, size);
-        data.RewindRead(0);
-        (void)pinAuthService.OnRemoteRequest(code, data, reply, optionAsync);
-    }
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption optionSync = MessageOption::TF_SYNC;
+    MessageOption optionAsync = MessageOption::TF_ASYNC;
+    // Sync
+    data.WriteInterfaceToken(PIN_AUTH_INTERFACE_TOKEN);
+    data.WriteBuffer(rawData, size);
+    data.RewindRead(0);
+    (void)pinAuthService.OnRemoteRequest(code, data, reply, optionSync);
+    // Async
+    data.WriteInterfaceToken(PIN_AUTH_INTERFACE_TOKEN);
+    data.WriteBuffer(rawData, size);
+    data.RewindRead(0);
+    (void)pinAuthService.OnRemoteRequest(code, data, reply, optionAsync);
     return true;
+}
+
+void PinAuthStubFuzzTest(const uint8_t *data, size_t size)
+{
+    Parcel parcel;
+    parcel.WriteBuffer(data, size);
+    parcel.RewindRead(0);
+    uint32_t pinAuthCodeLen = PIN_AUTH_CODE_MAX - PIN_AUTH_CODE_MIN + 1;
+    uint32_t code = parcel.ReadUint32() % pinAuthCodeLen + PIN_AUTH_CODE_MIN;
+    (void)DoPinAuthStubFuzzTest(data, size, code);
+    return;
 }
 } // namespace
 } // namespace PinAuth
