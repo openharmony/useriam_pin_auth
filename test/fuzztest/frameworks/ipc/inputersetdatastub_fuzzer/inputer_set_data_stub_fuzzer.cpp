@@ -44,7 +44,7 @@ constexpr uint32_t INPUTER_SET_DATA_CODE_MIN = 1;
 constexpr uint32_t INPUTER_SET_DATA_CODE_MAX = 1;
 const std::u16string INPUTER_SET_DATA_INTERFACE_TOKEN = u"ohos.PinAuth.InputerSetData";
 
-bool InputerSetDataStubFuzzTest(const uint8_t *rawData, size_t size)
+bool DoInputerSetDataStubFuzzTest(const uint8_t *rawData, size_t size, uint32_t code)
 {
     IAM_LOGI("start");
     if (rawData == nullptr) {
@@ -54,23 +54,32 @@ bool InputerSetDataStubFuzzTest(const uint8_t *rawData, size_t size)
     sptr<IAllInOneExecutor> executorProxy(nullptr);
     std::shared_ptr<PinAuthAllInOneHdi> pinAuthExecutorHdi_ = Common::MakeShared<PinAuthAllInOneHdi>(executorProxy);
     IInputerDataImpl iInputerDataImpl(SCHEDULE_ID, pinAuthExecutorHdi_);
-    for (uint32_t code = INPUTER_SET_DATA_CODE_MIN; code <= INPUTER_SET_DATA_CODE_MAX; code++) {
-        MessageParcel data;
-        MessageParcel reply;
-        MessageOption optionSync = MessageOption::TF_SYNC;
-        MessageOption optionAsync = MessageOption::TF_ASYNC;
-        // Sync
-        data.WriteInterfaceToken(INPUTER_SET_DATA_INTERFACE_TOKEN);
-        data.WriteBuffer(rawData, size);
-        data.RewindRead(0);
-        (void)iInputerDataImpl.OnRemoteRequest(code, data, reply, optionSync);
-        // Async
-        data.WriteInterfaceToken(INPUTER_SET_DATA_INTERFACE_TOKEN);
-        data.WriteBuffer(rawData, size);
-        data.RewindRead(0);
-        (void)iInputerDataImpl.OnRemoteRequest(code, data, reply, optionAsync);
-    }
+    MessageParcel data;
+    MessageParcel reply;
+    MessageOption optionSync = MessageOption::TF_SYNC;
+    MessageOption optionAsync = MessageOption::TF_ASYNC;
+    // Sync
+    data.WriteInterfaceToken(INPUTER_SET_DATA_INTERFACE_TOKEN);
+    data.WriteBuffer(rawData, size);
+    data.RewindRead(0);
+    (void)iInputerDataImpl.OnRemoteRequest(code, data, reply, optionSync);
+    // Async
+    data.WriteInterfaceToken(INPUTER_SET_DATA_INTERFACE_TOKEN);
+    data.WriteBuffer(rawData, size);
+    data.RewindRead(0);
+    (void)iInputerDataImpl.OnRemoteRequest(code, data, reply, optionAsync);
     return true;
+}
+
+void InputerSetDataStubFuzzTest(const uint8_t *data, size_t size)
+{
+    Parcel parcel;
+    parcel.WriteBuffer(data, size);
+    parcel.RewindRead(0);
+    uint32_t inputerSetDataCodeLen = INPUTER_SET_DATA_CODE_MAX - INPUTER_SET_DATA_CODE_MIN + 1;
+    uint32_t code = parcel.ReadUint32() % inputerSetDataCodeLen + INPUTER_SET_DATA_CODE_MIN;
+    (void)DoInputerSetDataStubFuzzTest(data, size, code);
+    return;
 }
 } // namespace
 } // namespace PinAuth

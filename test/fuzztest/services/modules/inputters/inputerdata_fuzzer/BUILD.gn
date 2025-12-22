@@ -16,7 +16,7 @@ import("//build/test.gni")
 
 ohos_fuzztest("InputerDataFuzzTest") {
   branch_protector_ret = "pac_ret"
-  module_out_path = "pin_auth/pin_auth"
+  module_out_path = "pin_auth/pin_auth/concurrent"
   fuzz_config_file = "../inputerdata_fuzzer"
 
   cflags = [

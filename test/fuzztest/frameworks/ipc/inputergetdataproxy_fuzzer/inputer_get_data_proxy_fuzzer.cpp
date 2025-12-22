@@ -42,7 +42,7 @@ namespace PinAuth {
 namespace {
 
 constexpr uint64_t SCHEDULE_ID = 123;
-bool InputerGetDataProxyFuzzTest(const uint8_t *rawData, size_t size)
+bool DoInputerGetDataProxyFuzzTest(const uint8_t *rawData, size_t size)
 {
     IAM_LOGI("start");
     if (rawData == nullptr) {
@@ -68,6 +68,20 @@ bool InputerGetDataProxyFuzzTest(const uint8_t *rawData, size_t size)
     std::shared_ptr<InputerGetDataProxy> inputerGetDataProxy = Common::MakeShared<InputerGetDataProxy>(nullptr);
     inputerGetDataProxy->OnGetData(param);
     return true;
+}
+
+using FuzzFunc = decltype(DoInputerGetDataProxyFuzzTest);
+FuzzFunc *g_fuzzFuncs[] = {DoInputerGetDataProxyFuzzTest};
+
+void InputerGetDataProxyFuzzTest(const uint8_t *data, size_t size)
+{
+    Parcel parcel;
+    parcel.WriteBuffer(data, size);
+    parcel.RewindRead(0);
+    uint32_t index = parcel.ReadUint32() % (sizeof(g_fuzzFuncs) / sizeof(FuzzFunc *));
+    auto fuzzFunc = g_fuzzFuncs[index];
+    fuzzFunc(data, size);
+    return;
 }
 } // namespace
 } // namespace PinAuth
