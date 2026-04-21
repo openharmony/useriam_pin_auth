@@ -84,8 +84,13 @@ std::vector<uint8_t> Scrypt::GetScrypt(const std::vector<uint8_t> &data, uint32_
     IAM_LOGI("start");
     std::vector<uint8_t> out;
     EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_SCRYPT, NULL);
+    if (pctx == nullptr) {
+        IAM_LOGE("EVP_PKEY_CTX_new_id fail");
+        return out;
+    }
     if (EVP_PKEY_derive_init(pctx) <= 0) {
         IAM_LOGE("EVP_PKEY_derive_init fail");
+        EVP_PKEY_CTX_free(pctx);
         return out;
     }
 
