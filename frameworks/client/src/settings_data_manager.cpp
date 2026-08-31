@@ -14,8 +14,9 @@
  */
 
 #include "settings_data_manager.h"
- 
+
 #include "iam_logger.h"
+#include "parse_pin_settings_int32.h"
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 #include "uri.h"
@@ -40,8 +41,11 @@ bool SettingsDataManager::GetIntValue(int32_t userId, const std::string &key, in
         IAM_LOGE("GetStringValue failed");
         return false;
     }
-    const int32_t DECIMAL = 10;
-    value = static_cast<int32_t>(strtoll(valueStr.c_str(), nullptr, DECIMAL));
+    if (!ParsePinSettingsInt32(valueStr, value)) {
+        IAM_LOGE("invalid settings int value, key=%{public}s, value=%{public}s",
+            key.c_str(), valueStr.c_str());
+        return false;
+    }
     return true;
 }
 
